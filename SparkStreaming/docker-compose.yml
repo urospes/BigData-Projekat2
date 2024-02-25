@@ -127,7 +127,7 @@ services:
     container_name: init-cassandra
     image: nuvo/docker-cqlsh
     volumes:
-      - ./cassandra_startup.cql:/scripts/data.cql
+      - ../cassandra_startup.cql:/scripts/data.cql
     environment:
       - CQLSH_HOST=cassandra-1
       - CQLSH_PORT=9042

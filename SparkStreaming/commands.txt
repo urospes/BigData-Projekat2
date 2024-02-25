@@ -1,5 +1,0 @@
-docker build --rm -f spark-streaming-app ./SparkStreamingApp/
-docker compose up -d --scale spark-worker=2  # sami biramo broj worker-a
-docker run -d --name spark-streaming-app -p 4040:4040 --network mobility_infr -e SPARK_STREAMING_APP_ARGS_WINDOW_SIZE=1_minute spark-streaming-app
-docker run --rm -it --network mobility_infr nuvo/docker-cqlsh cqlsh cassandra-1 9042 --cqlversion=3.4.6
-java -jar SUMODataProducer.jar ./SUMODataProducer/input traffic_data

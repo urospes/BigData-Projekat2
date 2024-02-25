@@ -1,3 +1,161 @@
 version: '3'
 
+services:
+  # -------------- #
+  # Flink          #
+  # -------------- #
+  jobmanager:
+    container_name: jobmanager
+    image: flink:1.18.1-java8
+    ports:
+      - "8081:8081"
+    command: jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager        
 
+  taskmanager:
+    image: flink:1.18.1-java8
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    scale: 1
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2
+        
+  
+        
+  # -------------- #
+  # Kafka          #
+  # -------------- #
+  zookeeper:
+    container_name: zookeeper
+    image: docker.io/bitnami/zookeeper:latest
+    ports:
+      - "2181:2181"
+    volumes:
+      - "zookeeper_data:/bitnami"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    container_name: kafka
+    image: docker.io/bitnami/kafka:latest
+    ports:
+      - "9094:9094"
+    volumes:
+      - "kafka_data:/bitnami"
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,EXTERNAL://:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+    depends_on:
+      - zookeeper
+  
+  
+  # ------------------------- #
+  # Kafka topic creation      #
+  # ------------------------- #
+  init-kafka:
+    container_name: init-kafka
+    image: docker.io/bitnami/kafka:latest
+    depends_on:
+     - kafka
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "cd /opt/bitnami/kafka/bin
+      # blocks until kafka is reachable
+      ./kafka-topics.sh --bootstrap-server kafka:9092 --list
+
+      echo 'Creating kafka topics'
+      ./kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic traffic_data
+      ./kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic results_pollution
+      ./kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic results_lanes"
+      
+
+
+  # -------------- #
+  # Cassandra      #
+  # -------------- #
+  cassandra-1:
+    container_name: cassandra-1
+    image: cassandra:latest
+    ports:
+      - 9042:9042
+    environment:
+      - CASSANDRA_SEEDS=cassandra-1
+    volumes:
+      - "cassandra_data1:/var/lib/cassandra"
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: always
+  
+  #cassandra-2:
+  #  container_name: cassandra-2
+  #  image: cassandra:latest
+  #  ports:
+  #    - "9043:9042"
+  #  environment:
+  #    - CASSANDRA_SEEDS=cassandra-1
+  #  volumes:
+  #    - "cassandra_data2:/var/lib/cassandra"
+  #  healthcheck:
+  #    test: ["CMD", "cqlsh", "-e", "describe keyspaces" ]
+  #    interval: 10s
+  #    timeout: 5s
+  #    retries: 10
+  #  restart: always
+  #  depends_on:
+  #    cassandra-1:
+  #     condition: service_healthy
+  
+  init-cassandra:
+    container_name: init-cassandra
+    image: nuvo/docker-cqlsh
+    volumes:
+      - ../cassandra_startup.cql:/scripts/data.cql
+    environment:
+      - CQLSH_HOST=cassandra-1
+      - CQLSH_PORT=9042
+      - CQLVERSION=3.4.6
+    depends_on:
+      cassandra-1:
+        condition: service_healthy
+      #cassandra-2:
+      #  condition: service_healthy
+
+
+
+  # ----------------- #
+  # Consumer App      #
+  # ----------------- #
+  consumer-app:
+    container_name: consumer-app
+    image: consumer-app
+    depends_on:
+      init-cassandra:
+        condition: service_completed_successfully
+
+
+
+
+networks:
+  default:
+      name: mobility_infr
+      
+volumes:
+  zookeeper_data:
+    driver: local
+  kafka_data:
+    driver: local
+  cassandra_data1:
+    driver: local
