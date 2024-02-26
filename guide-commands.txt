@@ -1,0 +1,31 @@
+*** Sve komande su navedene sa relativnom putanjom u odnosu na folder celog projekta "BigData-Projekat2" ***
+
+** NAPOMENA **: za obe aplikacije je potrebno navesti argumente za WINDOW_SIZE i WINDOW_SLIDE u formatu broj_vremenska-jedinica (npr. 1_minute, 5_seconds, itd.). Za obe aplikacije je moguce izostaviti argument za window_slide!
+
+* Pokretanje SparkStremaming aplikacije:
+	# Kreiranje docker image-a za submit aplikacije na spark klaster kontejnera
+		docker build --rm -f spark-streaming-app ./SparkStreamingApp/
+	# Podizanje infrastrukture
+		docker compose -f ./SparkStreaming/docker-compose.yml up -d --scale spark-worker=2  # sami biramo broj worker-a
+	# Spark-submit, staviti zeljene argumente za window_size i window_slide
+		docker run -d --name spark-streaming-app -p 4040:4040 --network mobility_infr -e SPARK_STREAMING_APP_ARGS_WINDOW_SIZE=1_minute -e SPARK_STREAMING_APP_ARGS_WINDOW_SLIDE=20_seconds spark-streaming-app
+	# Pokretanje DataProducer aplikacije, koja ima dva argumenta (1. putanja do CSV fajla sa podacima, 2. ime kafka topic-a na koji se salju podaci)
+		java -jar ./SUMODataProducer/SUMODataProducer.jar ./SUMODataProducer/input traffic_data
+	# Sledecom komandom moguce je vrsiti upite nad bazom u koju se upisuju rezultati obrade, ime keyspace-a je "mobility", a ime column family-a je "traffic_data"
+		docker run --rm -it --network mobility_infr nuvo/docker-cqlsh cqlsh cassandra-1 9042 --cqlversion=3.4.6
+	# Za zaustavljanje je potrebno izvrsiti sledece komande
+		docker rm -f spark-streaming-app
+		docker compose -f ./SparkStreaming/docker-compose.yml down -v
+	
+
+
+* Pokretanje FlinkStreaming aplikacije:
+	# Podizanje indrastrukture
+		docker compose -f ./FlinkStreaming/docker-compose.yml up -d --scale taskmanager=2
+	# Aplikacije se submituje pomocu web interfejsa na adresi localhost:8081, putanja do jar fajla koji se submituje je BigData-Projekat2/FlinkStreaming/FlinkStreamingApp/out/artifacts/FlinkStreamingApp_jar/FlinkStreamingApp.jar, Submit tabu je moguce navesti argumente aplikacije (window size i window slide)
+	# Pokretanje DataProducer aplikacije, koja ima dva argumenta (1. putanja do CSV fajla sa podacima, 2. ime kafka topic-a na koji se salju podaci)
+		java -jar ./SUMODataProducer/SUMODataProducer.jar ./SUMODataProducer/input traffic_data
+	# Sledecom komandom moguce je vrsiti upite nad bazom u koju se upisuju rezultati obrade, ime keyspace-a je "mobility", a ime column family-a je "traffic_data"	
+		docker run --rm -it --network mobility_infr nuvo/docker-cqlsh cqlsh cassandra-1 9042 --cqlversion=3.4.6
+	# Za zaustavljanje je potrebno izvrsiti sledece komande
+		docker compose -f ./FlinkStreaming/docker-compose.yml down -v

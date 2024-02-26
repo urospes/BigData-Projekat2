@@ -3,11 +3,14 @@ package org.smartcity.dtos;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 public class FullPollutionOutputRecord {
     String _key;
     String _windowStart;
     String _windowEnd;
+
+    @JsonUnwrapped
     PollutionOutputRecord pollutionRecord;
 
     String _aggType = "pollution_agg";

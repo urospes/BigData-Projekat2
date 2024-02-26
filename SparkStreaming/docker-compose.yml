@@ -75,7 +75,8 @@ services:
 
       echo 'Creating kafka topics'
       ./kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic traffic_data
-      ./kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic results
+      ./kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic results_pollution
+      ./kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic results_lanes
 
       echo 'Successfully created the following topics:'
       ./kafka-topics.sh --bootstrap-server kafka:9092 --list"

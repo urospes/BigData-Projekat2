@@ -17,7 +17,6 @@ public class MsgProducer {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9094");
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, DTOSerializer.class);
-        //props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         return new KafkaProducer<>(props);
     }
 
@@ -41,34 +40,12 @@ public class MsgProducer {
 
         return new DataEntryDTO(time, co, co2, hc, nox, pmx, fuel, id, lane, noise, type, waiting, x, y);
     }
-
-    //Ukoliko saljemo poruku kao string, potrebno je samo izdvojiti atribute
-    /*public static String[] getAttrs(String lineCsv){
-        List<Integer> attrIndices = Arrays.asList(0, 1, 2, 3, 4, 5, 9, 10, 11, 12, 16, 17, 18, 19);
-        String[] attrs = lineCsv.split(";");
-        String[] myAttrs = new String[14];
-        int i = 0;
-        for (int index: attrIndices) {
-            myAttrs[i++] = attrs[index];
-        }
-        return myAttrs;
-    }*/
-
     public static void produceEvent(KafkaProducer<String, DataEntryDTO> producer, String topic, String lineCsv){
 
         DataEntryDTO dataObj = toDTOObject(lineCsv);
         ProducerRecord<String, DataEntryDTO> rec = new ProducerRecord<>(topic, dataObj.getKey(), dataObj);
         producer.send(rec);
         System.out.println("New event. Event key(Vehicle ID) = " + dataObj.getKey());
-
-        /*String[] attrs = getAttrs(lineCsv);
-        String vehicle_id = attrs[7];
-        String message = String.join(";", attrs);
-
-        ProducerRecord<String, String> rec = new ProducerRecord<>(topic, vehicle_id, message);
-        producer.send(rec);
-        System.out.println("New event. Event key(Vehicle ID) = " + vehicle_id);
-        System.out.println(message);*/
     }
 
 

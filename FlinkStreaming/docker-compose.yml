@@ -86,8 +86,6 @@ services:
   cassandra-1:
     container_name: cassandra-1
     image: cassandra:latest
-    ports:
-      - 9042:9042
     environment:
       - CASSANDRA_SEEDS=cassandra-1
     volumes:

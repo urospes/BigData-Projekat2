@@ -9,9 +9,9 @@ def handle_message(msg, session, queries):
     decoded_msg = msg.value().decode("iso-8859-1")
     parsed_msg = json.loads(decoded_msg)
     if parsed_msg["agg_type"] == "pollution_agg":
-        values = (str(uuid.uuid4()), parsed_msg["agg_type"], parsed_msg["window_start"], parsed_msg["window_end"], parsed_msg["zone"], parsed_msg["pollution"]["sum(vehicle_CO)"], \
-                  parsed_msg["pollution"]["sum(vehicle_CO2)"], parsed_msg["pollution"]["sum(vehicle_HC)"], parsed_msg["pollution"]["sum(vehicle_PMx)"], \
-                  parsed_msg["pollution"]["sum(vehicle_NOx)"], parsed_msg["pollution"]["sum(vehicle_fuel)"])
+        values = (str(uuid.uuid4()), parsed_msg["agg_type"], parsed_msg["window_start"], parsed_msg["window_end"], parsed_msg["zone"], parsed_msg["sum(vehicle_CO)"], \
+                  parsed_msg["sum(vehicle_CO2)"], parsed_msg["sum(vehicle_HC)"], parsed_msg["sum(vehicle_PMx)"], \
+                  parsed_msg["sum(vehicle_NOx)"], parsed_msg["sum(vehicle_fuel)"])
         
         session.execute(queries["agg_pollution"], values)
     else:
